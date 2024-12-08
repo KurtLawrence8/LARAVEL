@@ -10,9 +10,10 @@ class CategoryController extends Controller
     /**
      * Display a listing of categories.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $categories = Category::all();
+        $adminId = $request->user()->id; // Assumes authentication
+        $categories = Category::where('admin_id', $adminId)->get();
         return response()->json($categories, 200);
     }
 
@@ -22,10 +23,13 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
-            'name' => 'required|string|max:50', // Validation for category name
+            'name' => 'required|string|max:50',
         ]);
 
-        $category = Category::create($validatedData);
+        $category = Category::create([
+            'name' => $validatedData['name'],
+            'admin_id' => $request->user()->id, // Associate with the authenticated admin
+        ]);
 
         return response()->json(['response' => 'success', 'category' => $category], 201);
     }
@@ -33,15 +37,17 @@ class CategoryController extends Controller
     /**
      * Display the specified category.
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        $category = Category::find($id);
+        $category = Category::where('id', $id)
+            ->where('admin_id', $request->user()->id) // Ensure ownership
+            ->first();
 
         if ($category) {
             return response()->json($category, 200);
         }
 
-        return response()->json(['response' => 'No records found!'], 404);
+        return response()->json(['response' => 'No records found or unauthorized!'], 403);
     }
 
     /**
@@ -49,7 +55,9 @@ class CategoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $category = Category::find($id);
+        $category = Category::where('id', $id)
+            ->where('admin_id', $request->user()->id) // Ensure ownership
+            ->first();
 
         if ($category) {
             $validatedData = $request->validate([
@@ -61,22 +69,24 @@ class CategoryController extends Controller
             return response()->json(['response' => 'success', 'category' => $category], 200);
         }
 
-        return response()->json(['response' => 'No records found!'], 404);
+        return response()->json(['response' => 'No records found or unauthorized!'], 403);
     }
 
     /**
      * Remove the specified category from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Request $request, string $id)
     {
-        $category = Category::find($id);
+        $category = Category::where('id', $id)
+            ->where('admin_id', $request->user()->id) // Ensure ownership
+            ->first();
 
         if ($category) {
             $category->delete();
             return response()->json(['response' => 'success'], 200);
         }
 
-        return response()->json(['response' => 'No records found!'], 404);
+        return response()->json(['response' => 'No records found or unauthorized!'], 403);
     }
 
     /**
@@ -90,7 +100,9 @@ class CategoryController extends Controller
             return response()->json(['error' => 'Search term is required'], 400);
         }
 
-        $categories = Category::where('name', 'like', '%' . $searchTerm . '%')->get();
+        $categories = Category::where('name', 'like', '%' . $searchTerm . '%')
+            ->where('admin_id', $request->user()->id) // Ensure ownership
+            ->get();
 
         if ($categories->isNotEmpty()) {
             return response()->json($categories, 200);

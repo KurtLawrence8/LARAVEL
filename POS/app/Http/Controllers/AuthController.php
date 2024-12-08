@@ -22,7 +22,7 @@ class AuthController extends Controller
             'address' => 'required|max:50',
             'contact_number' => 'required|min:10|max:10',
             'type' => 'required|max:10',
-            'email' => 'required|email|max:255|unique:users',
+            'email' => 'required|email|max:255|unique:admins',
             'password' => 'required|min:8|max:16'
         ]);
 
