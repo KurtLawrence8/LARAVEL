@@ -26,6 +26,12 @@ class Admin extends Authenticatable
         return $this->hasMany(Product::class);
     }
 
+    public function order()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+
     protected $fillable = [
         'name',
         'middle_name',

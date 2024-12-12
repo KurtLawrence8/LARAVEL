@@ -12,8 +12,11 @@ class CategoryController extends Controller
      */
     public function index(Request $request)
     {
-        $adminId = $request->user()->id; // Assumes authentication
-        $categories = Category::where('admin_id', $adminId)->get();
+        $authUser = $request->user();
+
+        // Check if the user is an admin or associated with an admin
+        $categories = Category::where('admin_id', $authUser->admin_id ?? $authUser->id)->get();
+
         return response()->json($categories, 200);
     }
 
@@ -26,9 +29,14 @@ class CategoryController extends Controller
             'name' => 'required|string|max:50',
         ]);
 
+        $authUser = $request->user();
+
+        // Determine the admin_id to associate with the category
+        $adminId = $authUser->admin_id ?? $authUser->id;
+
         $category = Category::create([
             'name' => $validatedData['name'],
-            'admin_id' => $request->user()->id, // Associate with the authenticated admin
+            'admin_id' => $adminId,
         ]);
 
         return response()->json(['response' => 'success', 'category' => $category], 201);
@@ -39,8 +47,10 @@ class CategoryController extends Controller
      */
     public function show(Request $request, string $id)
     {
+        $authUser = $request->user();
+
         $category = Category::where('id', $id)
-            ->where('admin_id', $request->user()->id) // Ensure ownership
+            ->where('admin_id', $authUser->admin_id ?? $authUser->id)
             ->first();
 
         if ($category) {
@@ -55,8 +65,10 @@ class CategoryController extends Controller
      */
     public function update(Request $request, string $id)
     {
+        $authUser = $request->user();
+
         $category = Category::where('id', $id)
-            ->where('admin_id', $request->user()->id) // Ensure ownership
+            ->where('admin_id', $authUser->admin_id ?? $authUser->id)
             ->first();
 
         if ($category) {
@@ -77,8 +89,10 @@ class CategoryController extends Controller
      */
     public function destroy(Request $request, string $id)
     {
+        $authUser = $request->user();
+
         $category = Category::where('id', $id)
-            ->where('admin_id', $request->user()->id) // Ensure ownership
+            ->where('admin_id', $authUser->admin_id ?? $authUser->id)
             ->first();
 
         if ($category) {
@@ -100,8 +114,10 @@ class CategoryController extends Controller
             return response()->json(['error' => 'Search term is required'], 400);
         }
 
+        $authUser = $request->user();
+
         $categories = Category::where('name', 'like', '%' . $searchTerm . '%')
-            ->where('admin_id', $request->user()->id) // Ensure ownership
+            ->where('admin_id', $authUser->admin_id ?? $authUser->id)
             ->get();
 
         if ($categories->isNotEmpty()) {

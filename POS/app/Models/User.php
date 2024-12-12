@@ -16,6 +16,22 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Admin::class);
     }
+
+
+    public function categories()
+    {
+        return $this->hasMany(Category::class);
+    }
+
+    public function products()
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function order()
+    {
+        return $this->hasMany(Product::class);
+    }
     protected $fillable = [
         'admin_id',
         'name',

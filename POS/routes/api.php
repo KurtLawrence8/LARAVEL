@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +37,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/products', [ProductController::class, 'store']); // Create a new product
     Route::put('/products/{id}', [ProductController::class, 'update']); // Update a product
     Route::delete('/products/{id}', [ProductController::class, 'destroy']); // Delete a product
+
+    Route::post('/scan-product', [OrderController::class, 'scanProduct']);
+    Route::post('/pay', [OrderController::class, 'pay']);
+    Route::get('/orders', [OrderController::class, 'index']);
 
     // Logout Route
     Route::post('/logout', [AuthController::class, 'logout']);

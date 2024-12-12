@@ -9,20 +9,22 @@ use Illuminate\Support\Facades\Log;
 class ProductController extends Controller
 {
     /**
-     * Display a listing of products for the authenticated admin.
+     * Display a listing of the products.
      */
     public function index(Request $request)
     {
-        $adminId = $request->user()->id; // Get the authenticated admin's ID
+        $authUser = $request->user();
+
+        // Admin can access all products, Users can only access products associated with their admin
         $products = Product::with('category')
-            ->where('admin_id', $adminId)
+            ->where('admin_id', $authUser->admin_id ?? $authUser->id)
             ->get();
 
         return response()->json($products, 200);
     }
 
     /**
-     * Store a newly created product.
+     * Store a newly created product in storage.
      */
     public function store(Request $request)
     {
@@ -36,9 +38,12 @@ class ProductController extends Controller
             'category_id' => 'required|exists:categories,id',
         ]);
 
+        $authUser = $request->user();
+
+        // Admin or User associated with an admin
         $product = Product::create(array_merge(
             $validatedData,
-            ['admin_id' => $request->user()->id] // Associate product with the admin
+            ['admin_id' => $authUser->admin_id ?? $authUser->id] // Associate product with admin or user
         ));
 
         Log::info('Product created:', $product->toArray());
@@ -47,12 +52,14 @@ class ProductController extends Controller
     }
 
     /**
-     * Display a specific product if owned by the authenticated admin.
+     * Display the specified product.
      */
     public function show(Request $request, $id)
     {
+        $authUser = $request->user();
+
         $product = Product::where('id', $id)
-            ->where('admin_id', $request->user()->id) // Restrict to admin's products
+            ->where('admin_id', $authUser->admin_id ?? $authUser->id) // Restrict to admin's products
             ->with('category')
             ->first();
 
@@ -64,12 +71,14 @@ class ProductController extends Controller
     }
 
     /**
-     * Update a product if owned by the authenticated admin.
+     * Update the specified product in storage.
      */
     public function update(Request $request, $id)
     {
+        $authUser = $request->user();
+
         $product = Product::where('id', $id)
-            ->where('admin_id', $request->user()->id) // Restrict to admin's products
+            ->where('admin_id', $authUser->admin_id ?? $authUser->id) // Restrict to admin's products
             ->first();
 
         if (!$product) {
@@ -92,12 +101,14 @@ class ProductController extends Controller
     }
 
     /**
-     * Delete a product if owned by the authenticated admin.
+     * Remove the specified product from storage.
      */
     public function destroy(Request $request, $id)
     {
+        $authUser = $request->user();
+
         $product = Product::where('id', $id)
-            ->where('admin_id', $request->user()->id) // Restrict to admin's products
+            ->where('admin_id', $authUser->admin_id ?? $authUser->id) // Restrict to admin's products
             ->first();
 
         if (!$product) {
