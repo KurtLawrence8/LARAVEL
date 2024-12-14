@@ -66,11 +66,12 @@ class OrderController extends Controller
                 return response()->json(['response' => "Insufficient stock for {$product->name}"], 400);
             }
 
+            // Pass the admin_id from the authenticated user to the order
             Order::create([
                 'product_id' => $orderData['product_id'],
                 'qty' => $orderData['qty'],
                 'cash' => $orderData['qty'] * $product->price,
-                'admin_id' => $request->user()->id, // Associate with the logged-in admin
+                'admin_id' => $request->user()->admin_id ?? $request->user()->id, // Use the admin_id from the user
             ]);
 
             $product->decrement('qty', $orderData['qty']);
@@ -80,7 +81,6 @@ class OrderController extends Controller
 
         return response()->json(['response' => 'Payment successful', 'change' => $change], 200);
     }
-
     /**
      * Update an order.
      */
