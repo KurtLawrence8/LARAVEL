@@ -43,6 +43,48 @@ class AuthController extends Controller
         return response()->json(["response" => "Record has been Successfully Saved", "user" => $user ,200]);
     }
 
+    public function adminupdate(Request $request, $id)
+    {
+        // Validate the request
+        $validatedData = $request->validate([
+            'name' => 'required|max:50',
+            'middle_name' => 'nullable|max:20',
+            'last_name' => 'required|max:20',
+            'birthday' => 'required|date',
+            'sex' => 'required|in:M,F', // Ensure valid options for sex
+            'company_name' => 'required|max:30',
+            'address' => 'required|max:50',
+            'contact_number' => 'required|digits:10', // Ensure 10-digit number
+            'type' => 'required|max:10',
+            'email' => 'required|email|max:255|unique:admins,email,' . $id,
+            'password' => 'nullable|min:8|max:16' // Password is optional for updates
+        ]);
+
+        // Find the admin by ID or throw a 404 error
+        $admin = Admin::findOrFail($id);
+
+        // Update the admin record with validated data
+        $admin->update([
+            'name' => $validatedData['name'],
+            'middle_name' => $validatedData['middle_name'] ?? $admin->middle_name,
+            'last_name' => $validatedData['last_name'],
+            'birthday' => $validatedData['birthday'],
+            'sex' => $validatedData['sex'],
+            'company_name' => $validatedData['company_name'],
+            'address' => $validatedData['address'],
+            'contact_number' => $validatedData['contact_number'],
+            'type' => $validatedData['type'],
+            'email' => $validatedData['email'],
+            'password' => isset($validatedData['password']) ? bcrypt($validatedData['password']) : $admin->password
+        ]);
+
+        // Return a success response
+        return response()->json([
+            "response" => "Record has been successfully updated",
+            "user" => $admin
+        ], 200);
+    }
+
     public function adminlogin(Request $request)
     {
         $user = Admin::select("id", "email", "password")->where('email', $request->email)->first();
@@ -131,12 +173,19 @@ class AuthController extends Controller
         return Response(["users" => $user]);
     }
 
+    public function adminlogout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json(['message' => 'Successfully logged out']);
+    }
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
         return response()->json(['message' => 'Successfully logged out']);
     }
+
     public function getUsersByAdmin(Request $request)
     {
         // Ensure that the admin is logged in and retrieve their ID
